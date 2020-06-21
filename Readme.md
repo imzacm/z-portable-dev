@@ -11,4 +11,4 @@ Run ```iwr https://deno.land/x/install/install.ps1 -useb | iex``` in PowerShell
 Run ```curl -fsSL https://deno.land/x/install/install.sh | sh```
 
 ### Run installation script
-```deno insall --allow-all https://raw.githubusercontent.com/imzacm/z-portable-dev/z-dev.ts```
+```deno insall --allow-all https://raw.githubusercontent.com/imzacm/z-portable-dev/master/z-dev.ts```

@@ -84,9 +84,81 @@ if (!await pathExists(DEV_DIR)) {
 
 const [ action, ...args ] = Deno.args
 
+type PackageType = 'source' | 'prebuilt'
+
+type PackageMeta = {
+  type: PackageType
+  build?: string[]
+  getVersion: {
+    api: string
+    path: string
+  }
+  getAsset: {
+    api?: string
+    path?: string
+    url?: string
+  }
+}
+
+const evaluatePackageMeta = async ({ getVersion, getAsset }: PackageMeta) => {
+  const versionRequest = await fetch(getVersion.api)
+  const versionResponse = await versionRequest.json()
+  const version: string = eval(`versionResponse${ getVersion.path }`)
+
+  if (getAsset.api && getAsset.path) {
+    const assetRequest = await fetch(getAsset.api)
+    const assetResponse = await assetRequest.json()
+    const url: string = eval(`assetResponse${ getAsset.path }`)
+    return { version, url }
+  }
+  else if (getAsset.url) {
+    const url: string = eval(`(\`${ getAsset.url }\`)`)
+    return { version, url }
+  }
+  throw new Error('Invalid getAsset')
+}
+
 if (action === 'install') {
-  const [ type, name, version ] = args
-  const request = await fetch(`${ MIRROR_LOCATION.endsWith('/') ? MIRROR_LOCATION.substring(0, MIRROR_LOCATION.length - 1) : MIRROR_LOCATION }/${ type }/${ name }.json`)
-  const meta = await request.json()
-  console.log(meta, Deno.build)
+  const [ type, name ] = args
+  const mirrorLocation = MIRROR_LOCATION.endsWith('/') ? MIRROR_LOCATION.substring(0, MIRROR_LOCATION.length - 1) : MIRROR_LOCATION
+  const request = await fetch(`${ mirrorLocation }/${ type }s/${ name }.json`)
+  let meta: any = {}
+  try {
+    meta = await request.json()
+  }
+  catch {
+    console.error(`${ type } ${ name } could not be found`)
+    Deno.exit(1)
+  }
+  const target: PackageMeta = meta[ `${ Deno.build.os }_${ Deno.build.arch }` ]
+  if (!target) {
+    console.error(`${ type } ${ name } does not support ${ `${ Deno.build.os }_${ Deno.build.arch }` }`)
+    Deno.exit(1)
+  }
+
+  const { version, url } = await evaluatePackageMeta(target)
+  const downloadRequest = await fetch(url)
+
+  if (!downloadRequest.body) {
+    throw new Error('')
+  }
+
+  const filename = url.substring(url.lastIndexOf('/') + 1)
+  const file = await Deno.open(`./${ filename }`, { create: true, write: true, read: true })
+  for await (const chunk of downloadRequest.body) {
+    await Deno.writeAll(file, chunk)
+  }
+  file.close()
+
+  const child = Deno.run({ cmd: [ 'tar', 'xf', `./${ filename }` ], stdout: 'piped', stderr: 'piped' })
+  console.log(new TextDecoder().decode(await child.output()))
+  console.error(new TextDecoder().decode(await child.stderrOutput()))
+
+  if (target.type === 'source' && target.build) {
+    for (const command of target.build) {
+      const child = Deno.run({ cmd: command.split(' '), stdout: 'piped', stderr: 'piped', cwd: filename.split('.tar')[ 0 ] })
+      console.log(new TextDecoder().decode(await child.output()))
+      console.error(new TextDecoder().decode(await child.stderrOutput()))
+    }
+  }
 }

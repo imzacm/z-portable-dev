@@ -13,14 +13,19 @@
     }
   },
   "linux_x86_64": {
-    "archive": "https://mirrors.edge.kernel.org/pub/software/scm/git/git-2.27.0.tar.gz",
     "type": "source",
     "getVersion": {
       "api": "https://api.github.com/repos/git/git/tags",
       "path": "[0].name.replace('v', '')"
     },
     "getAsset": {
-      "url": "https://mirrors.edge.kernel.org/pub/software/scm/git/git-${ version }.tar.gz"
-    }
+      "url": "https://mirrors.edge.kernel.org/pub/software/scm/git/git-${ version }.tar.xz"
+    },
+    "build": [
+      "autoconf",
+      "./configure",
+      "make",
+      "make install"
+    ]
   }
 }
