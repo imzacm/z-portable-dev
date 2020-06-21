@@ -13,19 +13,13 @@
     }
   },
   "linux_x86_64": {
-    "type": "source",
+    "type": "prebuilt",
     "getVersion": {
       "api": "https://api.github.com/repos/git/git/tags",
       "path": "[0].name.replace('v', '')"
     },
     "getAsset": {
-      "url": "https://mirrors.edge.kernel.org/pub/software/scm/git/git-${ version }.tar.xz"
-    },
-    "build": [
-      "autoconf",
-      "./configure",
-      "make",
-      "make install"
-    ]
+      "url": "http://archlinux.uk.mirror.allworldit.com/archlinux/extra/os/x86_64/git-${ version }-1-x86_64.pkg.tar.zst"
+    }
   }
 }
