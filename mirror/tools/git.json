@@ -1,0 +1,26 @@
+{
+  "win_x86_64": {
+    "type": "prebuilt",
+    "latestVersion": {
+      "getVersion": {
+        "api": "https://api.github.com/repos/git-for-windows/git/releases/latest",
+        "path": ".tag_name.replace('v', '').split('.windows')[0]"
+      },
+      "getAsset": {
+        "api": "https://api.github.com/repos/git-for-windows/git/releases/latest",
+        "path": ".assets.find(({ browser_download_url, name }) => name === `Git-${ version }-64-bit.tar.bz2`)"
+      }
+    }
+  },
+  "linux_x86_64": {
+    "archive": "https://mirrors.edge.kernel.org/pub/software/scm/git/git-2.27.0.tar.gz",
+    "type": "source",
+    "getVersion": {
+      "api": "https://api.github.com/repos/git/git/tags",
+      "path": "[0].name.replace('v', '')"
+    },
+    "getAsset": {
+      "url": "https://mirrors.edge.kernel.org/pub/software/scm/git/git-${ version }.tar.gz"
+    }
+  }
+}
